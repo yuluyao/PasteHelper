@@ -1,37 +1,39 @@
 <h2>Rectangle Creator</h2>
-<div>
-    方块数: <input id="count" value="5">
-    <button id="create-rect">创建方块</button>
-</div>
+<!--<div>-->
+<!--    方块数: <input id="count" value="5">-->
+<!--    <button id="create-rect">创建方块</button>-->
+<!--</div>-->
 
 <div>
     <input type="file" id="picture-selector" multiple="true" accept="image/png, image/jpeg">
     <button id="paste-picture">粘贴图片</button>
+    <p id="progress" style="display: none">处理中...</p>
 </div>
 
-<div>
-    <button id="invert-image">反转图片</button>
-</div>
+<!--<div>-->
+<!--    <button id="invert-image">反转图片</button>-->
+<!--</div>-->
 
 
-<button id="cancel">取消</button>
+<!--<button id="cancel">取消</button>-->
 <script>
 
-    document.getElementById('create-rect').onclick = () => {
-        const textbox = document.getElementById('count');
-        const count = parseInt(textbox.value, 10);
-        parent.postMessage({pluginMessage: {type: 'create-rect', count}}, '*')
-    }
-
-    document.getElementById('invert-image').onclick = () => {
-
-    }
+    // document.getElementById('create-rect').onclick = () => {
+    //     const textbox = document.getElementById('count');
+    //     const count = parseInt(textbox.value, 10);
+    //     parent.postMessage({pluginMessage: {type: 'create-rect', count}}, '*')
+    // }
+    //
+    // document.getElementById('invert-image').onclick = () => {
+    //
+    // }
 
     document.getElementById('paste-picture').onclick = async function () {
         let files = document.getElementById('picture-selector').files;
 
 
         let promise = new Promise((resolve, reject) => {
+            document.getElementById('progress').style.display = 'block'
             let data = []
             for (let i = 0; i < files.length; i++) {
                 let fileReader = new FileReader();
@@ -39,6 +41,7 @@
                     let uint8Array = new Uint8Array(fileReader.result);
                     data.push(uint8Array)
                     if (i === files.length - 1) {
+                        document.getElementById('progress').style.display = 'none'
                         resolve(data)
                     }
                 };
@@ -50,10 +53,11 @@
         })
     };
 
-    document.getElementById('cancel').onclick = () => {
-        parent.postMessage({pluginMessage: {type: 'cancel'}}, '*')
-    }
+    // document.getElementById('cancel').onclick = () => {
+    //     parent.postMessage({pluginMessage: {type: 'cancel'}}, '*')
+    // }
 
+/*
 
     // Create an event handler to receive messages from the main
     // thread.
@@ -115,6 +119,7 @@
         const imageData = ctx.getImageData(0, 0, image.width, image.height)
         return imageData
     }
+*/
 
 
 </script>
