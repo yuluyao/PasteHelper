@@ -24,7 +24,7 @@ figma.ui.onmessage = async msg => {
             break;
         case 'paste-picture':
 
-            let {picData} = msg
+            let {picData, prefix} = msg
             console.log(`【选取图片】${picData.length}张`);
 
 
@@ -37,8 +37,8 @@ figma.ui.onmessage = async msg => {
                             pickQingyun(child)
                             break;
                         case 'RECTANGLE':
-                            if (child.name.startsWith('qingyun-picture')) {
-                                console.log(`【找到slot】${child.name}`)
+                            if (child.name.startsWith(prefix)) {
+                                // console.log(`【找到slot】${child.name}`)
                                 slots.push(child);
                             }
                             break;
