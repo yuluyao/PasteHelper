@@ -23,18 +23,21 @@ figma.ui.onmessage = async msg => {
 
             break;
         case 'paste-picture':
-
-            let {picData, prefix} = msg
-            console.log(`【选取图片】${picData.length}张`);
-
+            let {picBytes, index, prefix, end} = msg
 
             let frames = figma.currentPage.selection;
+            frames = Array.from(frames).sort((a: FrameNode, b: FrameNode) => {
+                return a.y === b.y ? a.x - b.x : a.y - b.y
+            })
+            console.log(`【框选frame】${frames.length}个`);
+
             let slots: RectangleNode[] = []
-            let pickQingyun = function (node) {
+            let pickSlots = function (node) {
                 for (const child of node.children) {
                     switch (child.type) {
+                        case 'FRAME':
                         case 'GROUP':
-                            pickQingyun(child)
+                            pickSlots(child)
                             break;
                         case 'RECTANGLE':
                             if (child.name.startsWith(prefix)) {
@@ -45,33 +48,23 @@ figma.ui.onmessage = async msg => {
                     }
                 }
             }
-            frames.forEach(pickQingyun)
-
+            frames.forEach(pickSlots)
             console.log(`【slot数量】${slots.length}个`)
-            for (let i = 0; i < picData.length && i < slots.length; i++) {
-                let rect: RectangleNode = slots[i];
-                if (rect === undefined) {
-                    console.log('pop is undefined')
-                    break;
-                }
 
-                let bytes = picData[i]
-                const newFills = [];
-                // for (const paint of rect.fills) {
-                //     if (paint.type === 'IMAGE') {
-                //         const newPaint = JSON.parse(JSON.stringify(paint))
-                //         console.log(`paint --> ${JSON.stringify(paint)}`)
-                //         newPaint.imageHash = figma.createImage(bytes).hash
-                //         newFills.push(newPaint)
-                //     }
-                // }
+            let rect: RectangleNode = slots[index]
+            if (rect === undefined) {
+                console.log(`【paste结束，图片数量大于slot数量】`)
+                return;
+            }
 
-                let imagePaint = /*rect.fills.find((p) => p.type === 'IMAGE');*/ undefined
-                let newPaint
-                if (imagePaint !== undefined) {
-                    newPaint = JSON.parse(JSON.stringify(imagePaint))
-                } else {
-                    newPaint = JSON.parse(`
+
+            const newFills = [];
+            let imagePaint = /*rect.fills.find((p) => p.type === 'IMAGE');*/ undefined
+            let newPaint
+            if (imagePaint !== undefined) {
+                newPaint = JSON.parse(JSON.stringify(imagePaint))
+            } else {
+                newPaint = JSON.parse(`
 {
     "type": "IMAGE",
     "visible": true,
@@ -103,19 +96,73 @@ figma.ui.onmessage = async msg => {
     },
     "imageHash": "-"
 }`)
-                }
-                newPaint.imageHash = figma.createImage(bytes).hash
-                newFills.push(newPaint)
-
-                rect.fills = newFills;
             }
+            newPaint.imageHash = figma.createImage(picBytes).hash
+            newFills.push(newPaint)
 
+            rect.fills = newFills;
+
+//             for (let i = 0; i < slots.length; i++) {
+//                 let rect: RectangleNode = slots[i];
+//                 if (rect === undefined) {
+//                     console.log('pop is undefined')
+//                     break;
+//                 }
+//
+//                 let bytes = picData[i]
+//                 const newFills = [];
+//
+//                 let imagePaint = /*rect.fills.find((p) => p.type === 'IMAGE');*/ undefined
+//                 let newPaint
+//                 if (imagePaint !== undefined) {
+//                     newPaint = JSON.parse(JSON.stringify(imagePaint))
+//                 } else {
+//                     newPaint = JSON.parse(`
+// {
+//     "type": "IMAGE",
+//     "visible": true,
+//     "opacity": 1,
+//     "blendMode": "NORMAL",
+//     "scaleMode": "FILL",
+//     "imageTransform": [
+//         [
+//             1,
+//             0,
+//             0
+//         ],
+//         [
+//             0,
+//             1,
+//             0
+//         ]
+//     ],
+//     "scalingFactor": 0.5,
+//     "rotation": 0,
+//     "filters": {
+//         "exposure": 0,
+//         "contrast": 0,
+//         "saturation": 0,
+//         "temperature": 0,
+//         "tint": 0,
+//         "highlights": 0,
+//         "shadows": 0
+//     },
+//     "imageHash": "-"
+// }`)
+//                 }
+//                 newPaint.imageHash = figma.createImage(bytes).hash
+//                 newFills.push(newPaint)
+//
+//                 rect.fills = newFills;
+//             }
+
+            if (end) {
+                figma.closePlugin();
+            }
             break;
-        case  'cancel':
-
+        case 'cancel':
             break;
     }
-    figma.closePlugin();
 };
 
 

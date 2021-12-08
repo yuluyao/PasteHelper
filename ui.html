@@ -1,126 +1,105 @@
-<h2>Rectangle Creator</h2>
-<div>
-    前缀: <input id="prefix" value="qingyun-">
-    <!--    <button id="create-rect">创建方块</button>-->
-</div>
-
 <div>
     <input type="file" id="picture-selector" multiple="true" accept="image/png, image/jpeg">
     <button id="paste-picture">粘贴图片</button>
-    <p id="progress" style="display: none">处理中...</p>
+    <button id="paste-background">粘贴背景</button>
 </div>
 
-<!--<div>-->
-<!--    <button id="invert-image">反转图片</button>-->
-<!--</div>-->
-
-
-<!--<button id="cancel">取消</button>-->
 <script>
+    let inputEle = document.getElementById('picture-selector');
+    let picData = []
 
-    // document.getElementById('create-rect').onclick = () => {
-    //     const textbox = document.getElementById('count');
-    //     const count = parseInt(textbox.value, 10);
-    //     parent.postMessage({pluginMessage: {type: 'create-rect', count}}, '*')
-    // }
-    //
-    // document.getElementById('invert-image').onclick = () => {
-    //
-    // }
+    let btnPastePic = document.getElementById('paste-picture');
+    btnPastePic.disabled = true
+    let btnPasteBg = document.getElementById('paste-background');
+    btnPasteBg.disabled = true
 
-    document.getElementById('paste-picture').onclick = async function () {
-        let files = document.getElementById('picture-selector').files;
+    inputEle.onchange = async function () {
+        const files = inputEle.files;
+        for (let i = 0; i < files.length; i++) {
+            let fileReader = new FileReader();
+            fileReader.onload = function (e) {
+                let uint8Array = new Uint8Array(e.target.result);
+                // picData.push(uint8Array)
+                picData[i] = uint8Array
+            };
+            fileReader.onloadend = function () {
+                if (i === files.length - 1) {
+                    btnPastePic.disabled = false
+                    btnPasteBg.disabled = false
+                }
+            };
+            fileReader.onerror = function (e) {
+                console.log(`【读取错误】${i}`)
+            };
+            fileReader.readAsArrayBuffer(files[i])
+            console.log(`【读取文件】[${i}] -- (${files[i].name})`)
+        }
+    }
 
+
+    function readFiles() {
+        let files = inputEle.files;
 
         let promise = new Promise((resolve, reject) => {
-            document.getElementById('progress').style.display = 'block'
             let data = []
             for (let i = 0; i < files.length; i++) {
                 let fileReader = new FileReader();
-                fileReader.onloadend = function () {
-                    let uint8Array = new Uint8Array(fileReader.result);
-                    data.push(uint8Array)
+                fileReader.onload = function (e) {
+                    let uint8Array = new Uint8Array(e.target.result);
+                    // picData.push(uint8Array)
+                    data[i] = uint8Array
+                };
+                fileReader.onloadend = function (e) {
                     if (i === files.length - 1) {
-                        document.getElementById('progress').style.display = 'none'
                         resolve(data)
                     }
                 };
+                fileReader.onerror = function (e) {
+                    reject(`【读取错误】${i}`);
+                };
                 fileReader.readAsArrayBuffer(files[i])
+                console.log(`【读取文件】[${i}] -- (${files[i].name})`)
             }
         })
-        promise.then((picData) => {
-            const prefix = document.getElementById('prefix').value;
-            parent.postMessage({pluginMessage: {type: 'paste-picture', picData, prefix}}, '*')
+        return promise
+    }
+
+    document.getElementById('paste-picture').onclick = function () {
+        // readFiles().then(picData => {
+        //     parent.postMessage({pluginMessage: {type: 'paste-picture', picData, prefix: 'qy-pic'}}, '*')
+        // }).catch(e => {
+        //     console.log(e)
+        // })
+        picData.forEach((picBytes, index, array) => {
+            parent.postMessage({
+                pluginMessage: {
+                    type: 'paste-picture',
+                    prefix: 'qy-pic',
+                    index: index,
+                    picBytes: picBytes,
+                    end: index === array.length - 1,
+                }
+            }, '*')
         })
+
     };
 
-    // document.getElementById('cancel').onclick = () => {
-    //     parent.postMessage({pluginMessage: {type: 'cancel'}}, '*')
-    // }
-
-    /*
-
-        // Create an event handler to receive messages from the main
-        // thread.
-        window.onmessage = async (event) => {
-            // Just get the bytes directly from the pluginMessage since
-            // that's the only type of message we'll receive in this
-            // plugin. In more complex plugins, you'll want to check the
-            // type of the message.
-            if (event.type === 'paste') {
-                const bytes = event.data.pluginMessage;
-
-                const canvas = document.createElement('canvas')
-                const ctx = canvas.getContext('2d')
-
-                const imageData = await decode(canvas, ctx, bytes)
-                const pixels = imageData.data
-
-                // Do the actual work of inverting the colors.
-                for (let i = 0; i < pixels.length; i += 4) {
-                    pixels[i + 0] = 255 - pixels[i + 0]
-                    pixels[i + 1] = 255 - pixels[i + 1]
-                    pixels[i + 2] = 255 - pixels[i + 2]
-                    // Don't invert the alpha channel.
+    document.getElementById('paste-background').onclick = function () {
+        // readFiles().then((picData) => {
+        //     // const prefix = document.getElementById('prefix').value;
+        //     parent.postMessage({pluginMessage: {type: 'paste-picture', picData, prefix: 'qy-bg'}}, '*')
+        // })
+        picData.forEach((picBytes, index, array) => {
+            parent.postMessage({
+                pluginMessage: {
+                    type: 'paste-picture',
+                    prefix: 'qy-bg',
+                    index: index,
+                    picBytes: picBytes,
+                    end: index === array.length - 1,
                 }
-
-                const newBytes = await encode(canvas, ctx, imageData)
-                window.parent.postMessage({pluginMessage: newBytes}, '*')
-            }
-        }
-
-        // Encoding an image is also done by sticking pixels in an
-        // HTML canvas and by asking the canvas to serialize it into
-        // an actual PNG file via canvas.toBlob().
-        async function encode(canvas, ctx, imageData) {
-            ctx.putImageData(imageData, 0, 0)
-            return await new Promise((resolve, reject) => {
-                canvas.toBlob(function (blob) {
-                    let reader = new FileReader()
-                    reader.onload = () => resolve(new Uint8Array(reader.result))
-                    reader.onerror = () => reject(new Error('Could not read from blob'))
-                    reader.readAsArrayBuffer(blob)
-                })
-            })
-        }
-
-        // Decoding an image can be done by sticking it in an HTML
-        // canvas, as we can read individual pixels off the canvas.
-        async function decode(canvas, ctx, bytes) {
-            const url = URL.createObjectURL(new Blob([bytes]))
-            const image = await new Promise((resolve, reject) => {
-                const img = new Image()
-                img.onload = () => resolve(img)
-                img.onerror = () => reject()
-                img.src = url
-            })
-            canvas.width = image.width
-            canvas.height = image.height
-            ctx.drawImage(image, 0, 0)
-            const imageData = ctx.getImageData(0, 0, image.width, image.height)
-            return imageData
-        }
-    */
-
+            }, '*')
+        })
+    };
 
 </script>
