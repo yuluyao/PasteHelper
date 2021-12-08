@@ -41,41 +41,7 @@
         }
     }
 
-    /*
-        function readFiles() {
-            let files = inputEle.files;
-
-            let promise = new Promise((resolve, reject) => {
-                let data = []
-                for (let i = 0; i < files.length; i++) {
-                    let fileReader = new FileReader();
-                    fileReader.onload = function (e) {
-                        let uint8Array = new Uint8Array(e.target.result);
-                        // picData.push(uint8Array)
-                        data[i] = uint8Array
-                    };
-                    fileReader.onloadend = function (e) {
-                        if (i === files.length - 1) {
-                            resolve(data)
-                        }
-                    };
-                    fileReader.onerror = function (e) {
-                        reject(`【读取错误】${i}`);
-                    };
-                    fileReader.readAsArrayBuffer(files[i])
-                    console.log(`【读取文件】[${i}] -- (${files[i].name})`)
-                }
-            })
-            return promise
-        }
-    */
-
     document.getElementById('paste-picture').onclick = function () {
-        // readFiles().then(picData => {
-        //     parent.postMessage({pluginMessage: {type: 'paste-picture', picData, prefix: 'qy-pic'}}, '*')
-        // }).catch(e => {
-        //     console.log(e)
-        // })
         picData.forEach((picBytes, index, array) => {
             parent.postMessage({
                 pluginMessage: {
@@ -92,16 +58,13 @@
     };
 
     document.getElementById('paste-background').onclick = function () {
-        // readFiles().then((picData) => {
-        //     // const prefix = document.getElementById('prefix').value;
-        //     parent.postMessage({pluginMessage: {type: 'paste-picture', picData, prefix: 'qy-bg'}}, '*')
-        // })
         picData.forEach((picBytes, index, array) => {
             parent.postMessage({
                 pluginMessage: {
                     type: 'paste-picture',
                     prefix: 'qy-bg',
                     index: index,
+                    total: array.length,
                     picBytes: picBytes,
                     // end: index === array.length - 1,
                 }
