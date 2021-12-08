@@ -23,7 +23,7 @@ figma.ui.onmessage = async msg => {
 
             break;
         case 'paste-picture':
-            let {picBytes, index, prefix, end} = msg
+            let {picBytes, index, total, prefix, end} = msg
 
             let frames = figma.currentPage.selection;
             frames = Array.from(frames).sort((a: FrameNode, b: FrameNode) => {
@@ -156,9 +156,9 @@ figma.ui.onmessage = async msg => {
 //                 rect.fills = newFills;
 //             }
 
-            if (end) {
-                figma.closePlugin();
-            }
+            // if (end) {
+            //     figma.closePlugin();
+            // }
             break;
         case 'cancel':
             break;

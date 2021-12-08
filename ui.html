@@ -6,14 +6,19 @@
 
 <script>
     let inputEle = document.getElementById('picture-selector');
+    let btnPastePic = document.getElementById('paste-picture');
+    let btnPasteBg = document.getElementById('paste-background');
+
     let picData = []
 
-    let btnPastePic = document.getElementById('paste-picture');
-    btnPastePic.disabled = true
-    let btnPasteBg = document.getElementById('paste-background');
-    btnPasteBg.disabled = true
+    function reset() {
+        picData = []
+        btnPastePic.disabled = true
+        btnPasteBg.disabled = true
+    }
 
     inputEle.onchange = async function () {
+        reset()
         const files = inputEle.files;
         for (let i = 0; i < files.length; i++) {
             let fileReader = new FileReader();
@@ -36,33 +41,34 @@
         }
     }
 
+    /*
+        function readFiles() {
+            let files = inputEle.files;
 
-    function readFiles() {
-        let files = inputEle.files;
-
-        let promise = new Promise((resolve, reject) => {
-            let data = []
-            for (let i = 0; i < files.length; i++) {
-                let fileReader = new FileReader();
-                fileReader.onload = function (e) {
-                    let uint8Array = new Uint8Array(e.target.result);
-                    // picData.push(uint8Array)
-                    data[i] = uint8Array
-                };
-                fileReader.onloadend = function (e) {
-                    if (i === files.length - 1) {
-                        resolve(data)
-                    }
-                };
-                fileReader.onerror = function (e) {
-                    reject(`【读取错误】${i}`);
-                };
-                fileReader.readAsArrayBuffer(files[i])
-                console.log(`【读取文件】[${i}] -- (${files[i].name})`)
-            }
-        })
-        return promise
-    }
+            let promise = new Promise((resolve, reject) => {
+                let data = []
+                for (let i = 0; i < files.length; i++) {
+                    let fileReader = new FileReader();
+                    fileReader.onload = function (e) {
+                        let uint8Array = new Uint8Array(e.target.result);
+                        // picData.push(uint8Array)
+                        data[i] = uint8Array
+                    };
+                    fileReader.onloadend = function (e) {
+                        if (i === files.length - 1) {
+                            resolve(data)
+                        }
+                    };
+                    fileReader.onerror = function (e) {
+                        reject(`【读取错误】${i}`);
+                    };
+                    fileReader.readAsArrayBuffer(files[i])
+                    console.log(`【读取文件】[${i}] -- (${files[i].name})`)
+                }
+            })
+            return promise
+        }
+    */
 
     document.getElementById('paste-picture').onclick = function () {
         // readFiles().then(picData => {
@@ -76,8 +82,9 @@
                     type: 'paste-picture',
                     prefix: 'qy-pic',
                     index: index,
+                    total: array.length,
                     picBytes: picBytes,
-                    end: index === array.length - 1,
+                    // end: index === array.length - 1,
                 }
             }, '*')
         })
@@ -96,7 +103,7 @@
                     prefix: 'qy-bg',
                     index: index,
                     picBytes: picBytes,
-                    end: index === array.length - 1,
+                    // end: index === array.length - 1,
                 }
             }, '*')
         })
