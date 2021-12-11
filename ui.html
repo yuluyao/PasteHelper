@@ -7,37 +7,59 @@
         }
 
         #drop_area {
-            min-height: 480px;
+            min-height: 540px;
             /*background: antiquewhite;*/
 
             border: 2px solid transparent;
         }
 
         .drag_highlight {
-            border: 2px dashed deeppink !important;
+            border: 2px dashed #008cff !important;
+        }
+
+        .qy-selector {
+            display: none;
         }
 
         .qy-button {
             /*height: 20px;*/
-            border: 1px solid aqua;
-            border-radius: 10px;
-            padding: 2px 6px;
+            /*border: 1px solid aqua;*/
+            /*border-radius: 10px;*/
+            flex-grow: 1;
+            padding: 0 8px;
+            border: none;
+            margin: 1px;
+
+            height: 36px;
+            color: white;
+            background: #212121;
+            text-align: center;
+        }
+
+        .qy-button:hover {
+            background: #008cff;
+
+        }
+
+        .qy-button:disabled {
+            color: #999999;
+            background: #555555;
         }
 
         .grid {
             display: flex;
             flex-wrap: wrap;
-            margin: 0 -15px -15px 0;
+            margin: 0 0 0 0;
             touch-action: none;
             user-select: none;
         }
 
         .grid-item {
-            width: 54px;
-            height: 96px;
+            width: 90px;
+            height: 160px;
             /*line-height: 88px;*/
             text-align: center;
-            margin: 0 15px 15px 0;
+            margin: 0;
             background: #FFF;
             border: 1px solid #d6d6d6;
             list-style: none;
@@ -71,9 +93,9 @@
 
     </div>
     <div>
-        <input  id="picture-selector" class="qy-button" type="file" multiple="true" accept="image/png, image/jpeg">
+        <input  id="picture-selector" class="qy-selector" type="file" multiple="true" accept="image/png, image/jpeg">
     </div>
-    <div>
+    <div style="display: flex;">
         <button id="paste-picture" class="qy-button">粘贴图片</button>
         <button id="paste-background" class="qy-button">粘贴背景</button>
     </div>

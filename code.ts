@@ -1,7 +1,7 @@
 figma.showUI(__html__,{
-    title: '贴图助手',
-    width: 240,
-    height: 480,
+    title: '拖动图片到空白处',
+    width: 290,
+    height: 540,
 });
 
 figma.ui.onmessage = async msg => {
