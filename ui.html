@@ -191,14 +191,14 @@
             // console.log('【拖放事件】')
             dropArea.classList.remove('drag_highlight')
 
-            resetPicData()
+            // resetPicData()
             let files = ev.dataTransfer.files;
             for (let i = 0; i < files.length; i++) {
                 let fileReader = new FileReader();
                 fileReader.onload = function (e) {
                     let uint8Array = new Uint8Array(e.target.result);
-                    // picData.push(uint8Array)
-                    picData[i] = uint8Array
+                    picData.push(uint8Array)
+                    // picData[i] = uint8Array
                 };
                 fileReader.onloadend = function () {
                     if (i === files.length - 1) {
@@ -265,6 +265,7 @@
             })
         };
     }
+
 
 
     // class Draggable {

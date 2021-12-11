@@ -1,5 +1,5 @@
 figma.showUI(__html__,{
-    title: '拖动图片到空白处',
+    title: '青云素材助手',
     width: 290,
     height: 540,
 });
