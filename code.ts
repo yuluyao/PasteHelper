@@ -1,4 +1,8 @@
-figma.showUI(__html__);
+figma.showUI(__html__,{
+    title: '贴图助手',
+    width: 240,
+    height: 480,
+});
 
 figma.ui.onmessage = async msg => {
     switch (msg.type) {

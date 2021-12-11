@@ -1,75 +1,386 @@
-<div>
-    <input type="file" id="picture-selector" multiple="true" accept="image/png, image/jpeg">
-    <button id="paste-picture">粘贴图片</button>
-    <button id="paste-background">粘贴背景</button>
+<head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        #drop_area {
+            min-height: 480px;
+            /*background: antiquewhite;*/
+
+            border: 2px solid transparent;
+        }
+
+        .drag_highlight {
+            border: 2px dashed deeppink !important;
+        }
+
+        .qy-button {
+            /*height: 20px;*/
+            border: 1px solid aqua;
+            border-radius: 10px;
+            padding: 2px 6px;
+        }
+
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -15px -15px 0;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .grid-item {
+            width: 54px;
+            height: 96px;
+            /*line-height: 88px;*/
+            text-align: center;
+            margin: 0 15px 15px 0;
+            background: #FFF;
+            border: 1px solid #d6d6d6;
+            list-style: none;
+        }
+
+        .active {
+            background: #c8ebfb;
+        }
+
+        .clone-grid-item {
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1;
+            width: 90px;
+            height: 90px;
+            line-height: 88px;
+            text-align: center;
+            background: #FFF;
+            border: 1px solid #d6d6d6;
+            opacity: 0.8;
+            list-style: none;
+        }
+
+
+    </style>
+</head>
+
+<div id="drop_area">
+    <div>
+
+    </div>
+    <div>
+        <input  id="picture-selector" class="qy-button" type="file" multiple="true" accept="image/png, image/jpeg">
+    </div>
+    <div>
+        <button id="paste-picture" class="qy-button">粘贴图片</button>
+        <button id="paste-background" class="qy-button">粘贴背景</button>
+    </div>
+    <div class="grid">
+
+    </div>
 </div>
 
 <script>
     let inputEle = document.getElementById('picture-selector');
     let btnPastePic = document.getElementById('paste-picture');
     let btnPasteBg = document.getElementById('paste-background');
+    let dropArea = document.getElementById('drop_area');
 
     let picData = []
+    resetPicData()
 
-    function reset() {
+    // 点击上传图片
+    inputEle.onchange = handleInputChange()
+
+    // 拖动上传图片
+    dropArea.ondragenter = handleDragEnter();
+    dropArea.ondragover = handleDragOver();
+    dropArea.ondragleave = handleDragLeave();
+    dropArea.ondrop = handleDrop();
+
+    // Button，粘贴图片到figma
+    btnPastePic.onclick = pastePicturesOnFigma();
+    // Button，粘贴背景到figma
+    btnPasteBg.onclick = pasteBackgroundsOnFigma();
+
+
+    function resetPicData() {
         picData = []
         btnPastePic.disabled = true
         btnPasteBg.disabled = true
     }
 
-    inputEle.onchange = async function () {
-        reset()
-        const files = inputEle.files;
-        for (let i = 0; i < files.length; i++) {
-            let fileReader = new FileReader();
-            fileReader.onload = function (e) {
-                let uint8Array = new Uint8Array(e.target.result);
-                // picData.push(uint8Array)
-                picData[i] = uint8Array
-            };
-            fileReader.onloadend = function () {
-                if (i === files.length - 1) {
-                    btnPastePic.disabled = false
-                    btnPasteBg.disabled = false
-                }
-            };
-            fileReader.onerror = function (e) {
-                console.log(`【读取错误】${i}`)
-            };
-            fileReader.readAsArrayBuffer(files[i])
-            console.log(`【读取文件】[${i}] -- (${files[i].name})`)
-        }
+    function handleInputChange() {
+        return function () {
+            resetPicData()
+            const files = inputEle.files;
+            for (let i = 0; i < files.length; i++) {
+                let fileReader = new FileReader();
+                fileReader.onload = function (e) {
+                    let uint8Array = new Uint8Array(e.target.result);
+                    // picData.push(uint8Array)
+                    picData[i] = uint8Array
+                };
+                fileReader.onloadend = function () {
+                    if (i === files.length - 1) {
+                        btnPastePic.disabled = false
+                        btnPasteBg.disabled = false
+                    }
+                };
+                fileReader.onerror = function (e) {
+                    console.log(`【读取错误】${i}`)
+                };
+                fileReader.readAsArrayBuffer(files[i])
+                console.log(`【读取文件】[${i}] -- (${files[i].name})`)
+
+                previewSelectedPictures(files[i])
+            }
+        };
     }
 
-    document.getElementById('paste-picture').onclick = function () {
-        picData.forEach((picBytes, index, array) => {
-            parent.postMessage({
-                pluginMessage: {
-                    type: 'paste-picture',
-                    prefix: 'qy-pic',
-                    index: index,
-                    total: array.length,
-                    picBytes: picBytes,
-                    // end: index === array.length - 1,
-                }
-            }, '*')
-        })
 
-    };
+    function handleDragEnter() {
+        return function (ev) {
+            dropArea.classList.add('drag_highlight')
+            ev.preventDefault();
+        };
+    }
 
-    document.getElementById('paste-background').onclick = function () {
-        picData.forEach((picBytes, index, array) => {
-            parent.postMessage({
-                pluginMessage: {
-                    type: 'paste-picture',
-                    prefix: 'qy-bg',
-                    index: index,
-                    total: array.length,
-                    picBytes: picBytes,
-                    // end: index === array.length - 1,
-                }
-            }, '*')
-        })
-    };
+
+    function handleDragOver() {
+        return function (ev) {
+            ev.preventDefault();
+        };
+    }
+
+
+    function handleDragLeave() {
+        return function (ev) {
+            dropArea.classList.remove('drag_highlight')
+            ev.preventDefault();
+        };
+    }
+
+
+    function handleDrop() {
+        return function (ev) {
+            // console.log('【拖放事件】')
+            dropArea.classList.remove('drag_highlight')
+
+            resetPicData()
+            let files = ev.dataTransfer.files;
+            for (let i = 0; i < files.length; i++) {
+                let fileReader = new FileReader();
+                fileReader.onload = function (e) {
+                    let uint8Array = new Uint8Array(e.target.result);
+                    // picData.push(uint8Array)
+                    picData[i] = uint8Array
+                };
+                fileReader.onloadend = function () {
+                    if (i === files.length - 1) {
+                        btnPastePic.disabled = false
+                        btnPasteBg.disabled = false
+                    }
+                };
+                fileReader.onerror = function (e) {
+                    console.log(`【读取错误】${i}`)
+                };
+                fileReader.readAsArrayBuffer(files[i])
+                console.log(`【读取文件】[${i}] -- (${files[i].name})`)
+
+
+                previewSelectedPictures(files[i])
+
+            }
+            ev.preventDefault()
+        };
+    }
+
+
+    function previewSelectedPictures(file) {
+        let fileReader = new FileReader();
+        fileReader.onload = function (e) {
+            let imageElement = document.createElement('img');
+            imageElement.src = e.target.result;
+            imageElement.className = 'grid-item'
+            document.querySelector('.grid').appendChild(imageElement)
+        };
+        fileReader.readAsDataURL(file);
+    }
+
+    function pastePicturesOnFigma() {
+        return function () {
+            picData.forEach((picBytes, index, array) => {
+                parent.postMessage({
+                    pluginMessage: {
+                        type: 'paste-picture',
+                        prefix: 'qy-pic',
+                        index: index,
+                        total: array.length,
+                        picBytes: picBytes,
+                        // end: index === array.length - 1,
+                    }
+                }, '*')
+            })
+        };
+    }
+
+    function pasteBackgroundsOnFigma() {
+        return function () {
+            picData.forEach((picBytes, index, array) => {
+                parent.postMessage({
+                    pluginMessage: {
+                        type: 'paste-picture',
+                        prefix: 'qy-bg',
+                        index: index,
+                        total: array.length,
+                        picBytes: picBytes,
+                        // end: index === array.length - 1,
+                    }
+                }, '*')
+            })
+        };
+    }
+
+
+    // class Draggable {
+    //     constructor(options) {
+    //         this.parent = options.element; // 父级元素
+    //         this.cloneElementClassName = options.cloneElementClassName; // 克隆元素类名
+    //         this.isPointerdown = false;
+    //         this.diff = { x: 0, y: 0 }; // 相对于上一次移动差值
+    //         this.drag = { element: null, index: 0, lastIndex: 0 }; // 拖拽元素
+    //         this.drop = { element: null, index: 0, lastIndex: 0 }; // 释放元素
+    //         this.clone = { element: null, x: 0, y: 0 };
+    //         this.lastPointermove = { x: 0, y: 0 };
+    //         this.rectList = []; // 用于保存拖拽项getBoundingClientRect()方法获得的数据
+    //         this.init();
+    //     }
+    //     init() {
+    //         this.getRect();
+    //         this.bindEventListener();
+    //     }
+    //     // 获取元素位置信息
+    //     getRect() {
+    //         this.rectList.length = 0;
+    //         for (const item of this.parent.children) {
+    //             this.rectList.push(item.getBoundingClientRect());
+    //         }
+    //     }
+    //     handlePointerdown(e) {
+    //         // 如果是鼠标点击，只响应左键
+    //         if (e.pointerType === 'mouse' && e.button !== 0) {
+    //             return;
+    //         }
+    //         if (e.target === this.parent) {
+    //             return;
+    //         }
+    //         this.isPointerdown = true;
+    //         this.parent.setPointerCapture(e.pointerId);
+    //         this.lastPointermove.x = e.clientX;
+    //         this.lastPointermove.y = e.clientY;
+    //         this.drag.element = e.target;
+    //         this.drag.element.classList.add('active');
+    //         this.clone.element = this.drag.element.cloneNode(true);
+    //         this.clone.element.className = this.cloneElementClassName;
+    //         this.clone.element.style.transition = 'none';
+    //         const i = [].indexOf.call(this.parent.children, this.drag.element);
+    //         this.clone.x = this.rectList[i].left;
+    //         this.clone.y = this.rectList[i].top;
+    //         this.drag.index = i;
+    //         this.drag.lastIndex = i;
+    //         this.clone.element.style.transform = 'translate3d(' + this.clone.x + 'px, ' + this.clone.y + 'px, 0)';
+    //         document.body.appendChild(this.clone.element);
+    //     }
+    //     handlePointermove(e) {
+    //         if (this.isPointerdown) {
+    //             this.diff.x = e.clientX - this.lastPointermove.x;
+    //             this.diff.y = e.clientY - this.lastPointermove.y;
+    //             this.lastPointermove.x = e.clientX;
+    //             this.lastPointermove.y = e.clientY;
+    //             this.clone.x += this.diff.x;
+    //             this.clone.y += this.diff.y;
+    //             this.clone.element.style.transform = 'translate3d(' + this.clone.x + 'px, ' + this.clone.y + 'px, 0)';
+    //             for (let i = 0; i < this.rectList.length; i++) {
+    //                 // 碰撞检测
+    //                 if (e.clientX > this.rectList[i].left && e.clientX < this.rectList[i].right &&
+    //                     e.clientY > this.rectList[i].top && e.clientY < this.rectList[i].bottom) {
+    //                     this.drop.element = this.parent.children[i];
+    //                     this.drop.lastIndex = i;
+    //                     if (this.drag.element !== this.drop.element) {
+    //                         if (this.drag.index < i) {
+    //                             this.parent.insertBefore(this.drag.element, this.drop.element.nextElementSibling);
+    //                             this.drop.index = i - 1;
+    //                         } else {
+    //                             this.parent.insertBefore(this.drag.element, this.drop.element);
+    //                             this.drop.index = i + 1;
+    //                         }
+    //                         this.drag.index = i;
+    //                         const dragRect = this.rectList[this.drag.index];
+    //                         const lastDragRect = this.rectList[this.drag.lastIndex];
+    //                         const dropRect = this.rectList[this.drop.index];
+    //                         const lastDropRect = this.rectList[this.drop.lastIndex];
+    //                         this.drag.lastIndex = i;
+    //                         this.drag.element.style.transition = 'none';
+    //                         this.drop.element.style.transition = 'none';
+    //                         this.drag.element.style.transform = 'translate3d(' + (lastDragRect.left - dragRect.left) + 'px, ' + (lastDragRect.top - dragRect.top) + 'px, 0)';
+    //                         this.drop.element.style.transform = 'translate3d(' + (lastDropRect.left - dropRect.left) + 'px, ' + (lastDropRect.top - dropRect.top) + 'px, 0)';
+    //                         this.drag.element.offsetLeft; // 触发重绘
+    //                         this.drag.element.style.transition = 'transform 150ms';
+    //                         this.drop.element.style.transition = 'transform 150ms';
+    //                         this.drag.element.style.transform = 'translate3d(0px, 0px, 0px)';
+    //                         this.drop.element.style.transform = 'translate3d(0px, 0px, 0px)';
+    //                     }
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     handlePointerup(e) {
+    //         if (this.isPointerdown) {
+    //             this.isPointerdown = false;
+    //             this.drag.element.classList.remove('active');
+    //             this.clone.element.remove();
+    //         }
+    //     }
+    //     handlePointercancel(e) {
+    //         if (this.isPointerdown) {
+    //             this.isPointerdown = false;
+    //             this.drag.element.classList.remove('active');
+    //             this.clone.element.remove();
+    //         }
+    //     }
+    //     bindEventListener() {
+    //         this.handlePointerdown = this.handlePointerdown.bind(this);
+    //         this.handlePointermove = this.handlePointermove.bind(this);
+    //         this.handlePointerup = this.handlePointerup.bind(this);
+    //         this.handlePointercancel = this.handlePointercancel.bind(this);
+    //         this.getRect = this.getRect.bind(this);
+    //         this.parent.addEventListener('pointerdown', this.handlePointerdown);
+    //         this.parent.addEventListener('pointermove', this.handlePointermove);
+    //         this.parent.addEventListener('pointerup', this.handlePointerup);
+    //         this.parent.addEventListener('pointercancel', this.handlePointercancel);
+    //         window.addEventListener('scroll', this.getRect);
+    //         window.addEventListener('resize', this.getRect);
+    //         window.addEventListener('orientationchange', this.getRect);
+    //     }
+    //     unbindEventListener() {
+    //         this.parent.removeEventListener('pointerdown', this.handlePointerdown);
+    //         this.parent.removeEventListener('pointermove', this.handlePointermove);
+    //         this.parent.removeEventListener('pointerup', this.handlePointerup);
+    //         this.parent.removeEventListener('pointercancel', this.handlePointercancel);
+    //         window.removeEventListener('scroll', this.getRect);
+    //         window.removeEventListener('resize', this.getRect);
+    //         window.removeEventListener('orientationchange', this.getRect);
+    //     }
+    // }
+    // // 实例化
+    // new Draggable({
+    //     element: document.querySelector('.grid'),
+    //     cloneElementClassName: 'clone-grid-item'
+    // });
+
 
 </script>
