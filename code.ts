@@ -1,5 +1,5 @@
 figma.showUI(__html__,{
-    title: '青云素材助手',
+    title: 'Qing',
     width: 290,
     height: 540,
 });
