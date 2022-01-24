@@ -1,11 +1,28 @@
-figma.showUI(__html__,{
+figma.showUI(__html__, {
     title: 'Qing',
     width: 290,
     height: 540,
 });
 
+
+
+figma.clientStorage.getAsync('pastePrefix').then(v => {
+    if (v) {
+        notifyInitPrefixValue(v);
+    }
+}, e => {
+});
+
+
+
 figma.ui.onmessage = async msg => {
     switch (msg.type) {
+        case 'save-prefix':
+            let {prefix: prefixText} = msg;
+            console.log(`【save-prefix】${prefixText}`)
+            // onSavePrefixText
+            await onSavePrefixText(prefixText);
+            break;
         case 'paste-picture':
             let {picBytes, index, total, prefix, end} = msg
 
@@ -92,3 +109,14 @@ figma.ui.onmessage = async msg => {
             break;
     }
 };
+
+async function onSavePrefixText(prefix0) {
+    await figma.clientStorage.setAsync('pastePrefix', prefix0);
+}
+
+function notifyInitPrefixValue(v) {
+    figma.ui.postMessage({
+        initPrefix: true,
+        prefix: v
+    });
+}

@@ -103,7 +103,6 @@
     <div style="display: flex;">
         <input id="input-prefix" type="text" class="qy-input" value="pic">
         <button id="paste-picture" class="qy-button">粘贴图片</button>
-        <button id="paste-background" class="qy-button">粘贴背景</button>
     </div>
     <div class="grid">
 
@@ -114,12 +113,11 @@
     let inputEle = document.getElementById('picture-selector');
     let inputPrefix = document.getElementById('input-prefix')
     let btnPastePic = document.getElementById('paste-picture');
-    let btnPasteBg = document.getElementById('paste-background');
-    btnPasteBg.style.display = 'none';
     let dropArea = document.getElementById('drop_area');
 
     let picData = []
     resetPicData()
+
 
     // 点击上传图片
     inputEle.onchange = handleInputChange()
@@ -132,14 +130,18 @@
 
     // Button，粘贴图片到figma
     btnPastePic.onclick = pastePicturesOnFigma();
-    // Button，粘贴背景到figma
-    btnPasteBg.onclick = pasteBackgroundsOnFigma();
+
+
+
+    inputPrefix.onchange = notifySavePrefixText();
+
+    // 初始化贴图前缀文本
+    window.onmessage = onInitPrefixValue();
 
 
     function resetPicData() {
         picData = []
         btnPastePic.disabled = true
-        btnPasteBg.disabled = true
     }
 
     function handleInputChange() {
@@ -156,7 +158,6 @@
                 fileReader.onloadend = function () {
                     if (i === files.length - 1) {
                         btnPastePic.disabled = false
-                        btnPasteBg.disabled = false
                     }
                 };
                 fileReader.onerror = function (e) {
@@ -211,7 +212,6 @@
                 fileReader.onloadend = function () {
                     if (i === files.length - 1) {
                         btnPastePic.disabled = false
-                        btnPasteBg.disabled = false
                     }
                 };
                 fileReader.onerror = function (e) {
@@ -243,7 +243,6 @@
     function pastePicturesOnFigma() {
         return function () {
             let prefix = inputPrefix.value;
-            console.log(`prefix is ${prefix}`)
             picData.forEach((picBytes, index, array) => {
                 parent.postMessage({
                     pluginMessage: {
@@ -259,22 +258,22 @@
         };
     }
 
-    function pasteBackgroundsOnFigma() {
-        return function () {
-            picData.forEach((picBytes, index, array) => {
-                parent.postMessage({
-                    pluginMessage: {
-                        type: 'paste-picture',
-                        prefix: 'qy-bg',
-                        index: index,
-                        total: array.length,
-                        picBytes: picBytes,
-                        // end: index === array.length - 1,
-                    }
-                }, '*')
-            })
+    function notifySavePrefixText() {
+        return e => {
+            parent.postMessage({
+                pluginMessage: {
+                    type: 'save-prefix',
+                    prefix: e.target.value,
+                }
+            }, '*')
         };
     }
-
+    function onInitPrefixValue() {
+        return msg => {
+            if (msg.data.pluginMessage.initPrefix) {
+                inputPrefix.value = msg.data.pluginMessage.prefix;
+            }
+        };
+    }
 
 </script>
