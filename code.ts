@@ -49,6 +49,7 @@ figma.ui.onmessage = async msg => {
                     }
                 }
             }
+
             frames.forEach(pickSlots)
             console.log(`【slot数量】${slots.length}个`)
 
